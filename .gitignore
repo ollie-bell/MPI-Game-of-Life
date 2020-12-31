@@ -1,0 +1,8 @@
+.vscode/
+build/
+outfiles/
+__pycache__/
+
+*.gif
+*.bin
+*.csv
