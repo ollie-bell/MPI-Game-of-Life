@@ -34,11 +34,11 @@ def create_animation():
                 img = Image.frombuffer('L', (cols, rows), data)
                 img.putpalette(palette)
                 imgs.append(img)
-        imgs[0].save('animation.gif', save_all=True,
-                     append_images=imgs[1:], loop=0)
+
+    imgs[0].save('animation.gif', save_all=True, append_images=imgs[1:], loop=0)
 
 
 # write and save the animation
-print("Writing ./outfiles/animation.gif...")
+print("Writing animation.gif...")
 create_animation()
 print("\nAnimation ready.")
