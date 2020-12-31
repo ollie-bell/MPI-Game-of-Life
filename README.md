@@ -33,7 +33,7 @@ opts :  --periodic --> enable periodic boundaries [default: disabled]
 
 Examples:
 ```
-mpiexec -np ./lifeMPI 4 256 256 500 0.10 --periodic
+mpiexec -np 4 ./lifeMPI 256 256 500 0.10 --periodic
 
 mpiexec -np 9 ./lifeMPI 247 331 250 grid.bin --dump=63 --periodic
 ```
