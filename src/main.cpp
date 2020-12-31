@@ -206,14 +206,14 @@ void show_usage(const char *program_name)
         std::cerr << "Usage:\tmpiexec [--use-hw-threads] -np <#> " << program_name << " <args> [opts]\n"
                   << std::endl
                   << "args :"
-                  << "\tnrows (unsigned int) --> number of rows in the grid\n"
-                  << "\tncols (unsigned int) --> number of columns in the grid\n"
-                  << "\tngens (unsigned int) --> number of generations to simulate\n"
+                  << "\tnrows (uint) --> number of rows in the grid\n"
+                  << "\tncols (uint) --> number of columns in the grid\n"
+                  << "\tngens (uint) --> number of generations to simulate\n"
                   << "\tEITHER filename (string) OR prob_alive (float) --> initial state of the grid\n"
                   << std::endl
                   << "opts :"
                   << "\t--periodic --> enable periodic boundaries [default: disabled]\n"
-                  << "\t--dump=<unsigned int> --> number of generations between output file dumps [default: 101]\n"
+                  << "\t--dump=<uint> --> num generations between output file dumps [default: 101]\n"
                   << std::endl
                   << "e.g. :"
                   << "\tmpiexec -np 4 " << program_name << " 247 331 250 grid.bin --periodic --dump=63\n"
