@@ -19,6 +19,8 @@ On a single machine
 ```
 mpiexec [--use-hw-threads] -np <#> ./lifeMPI <args> [opts]
 ```
+* `--use-hw-threads` enables use of logical processors (e.g. hyper-threaded cores). This is not likely to improve performance, and may negatively impact performance.
+
 where
 
 ```
