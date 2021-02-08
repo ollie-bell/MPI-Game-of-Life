@@ -19,7 +19,7 @@ On a single machine
 ```
 mpiexec [--use-hwthread-cpus] -np <#> ./lifeMPI <args> [opts]
 ```
-* `--use-hwthreads-cpus` enables use of logical processors (e.g. hyper-threaded cores). This is not likely to improve performance, and may negatively impact performance.
+* `--use-hwthread-cpus` enables use of logical processors (e.g. hyper-threaded cores). This is not likely to improve performance, and may negatively impact performance.
 
 where
 
