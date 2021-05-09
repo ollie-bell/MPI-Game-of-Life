@@ -1,0 +1,101 @@
+// ** Parallel writing to disk
+//     ... don't want to have to post-process fragmented grid states in seperate files from different processes
+//     ... have all processes write to the SAME file when the buffer is dumped
+//             
+//             How to achieve this? Two potential approaches:
+//                 
+//                 (a) Pre-calculate number of dump files and their sizes and create empty files of the correct sizes.
+//                     Then use process id with seekp to work out where each process should write to the file... hopefully this avoids the need for barriers! 
+//                     OH I JUST REALISED THIS WON'T BE EASY TO GET WORKING...
+//                     HOW DO I INTERLEAVE THE BUFFERS FROM DIFFERENT PROCESSORS TO GET DATA IN THE CORRECT ORDER IN THE OUTPUT FILE????
+// 
+//                     I would have to do a seekp for each row in the grid 
+//                     the question becomes how slow will this be? How much overhead does seekp have?
+// 
+//                     try looking into mmap instead? 
+//                     https://stackoverflow.com/questions/10454964/mapping-non-contiguous-blocks-from-a-file-into-contiguous-memory-addresses
+// 
+//                     refs:   https://stackoverflow.com/questions/7896035/c-make-a-file-of-a-specific-size
+//                             https://unix.stackexchange.com/questions/101332/generate-file-of-a-certain-size
+//                             https://courses.cs.vt.edu/~cs2604/fall00/binio.html#seekp
+// 
+//                 (b) Hopefully MPI-I/O will give me the solution I am looking for... looks like it does
+//                     (and will be much better than anything I can do manually in (a))
+// 
+//                     MPI_File_set_view() looks promising
+//                     Or doing something fancy with MPI_Type_vector() or MPI_Type_create_indexed_block() or MPI_Type_create_subarray?
+//                     
+// 
+//                     refs:   https://stackoverflow.com/questions/55235929/mpi-io-write-to-file-in-non-contiguous-pattern
+//                             https://github.com/ljdursi/parallel-IO-tutorial
+//                             https://github.com/NCAR/ParallelIO
+// 
+//             How about doing BOTH and comparing performance?
+//
+
+** When the user specifies a file, it shouldn't have to be the same size as the nrows, ncols input.
+    ... instead, they can just create a small area of the starting grid where the cells are non-zero in a file
+    ... then they use nrows, ncols to add padding (assuming they want their input file to be in the centre of the grid)
+    ... also use nrows, ncols to discard grid cells from the input file if it is too big
+
+
+** Optimize gif/movie creation from dump files 
+    ... I have all grid generations stored contiguously across multiple dump files
+        --> need the quickest way to just convert these dump files to a gif or movie
+
+    ... I have got Pillow working pretty fast in terms of creating a list of PIL.Image objects, but the actual save command 
+        to write the gif is slow.
+    
+    ... could possibly get Pillow even faster if I pack together the end bits of bytes from dump files and use mode='1'
+            --> how do I pack together end bits?
+            --> this could lead down a HUGE rabbit hole of re-writing Game of Life using a bitwise approach!
+            --> for now, quick and dirty fix: "compress" dump files to only store the first bit of each byte?
+                    e.g. Huffman encoding, bit packing
+            --> OR can I get MPI I/O to somehow only write the first bit of each byte to file? Sounds tricky
+
+    ... is there a faster solution than pillow? Doesn't have to be python based
+
+        e.g. imageio, opencv, pillow, lycon, boost.GIL, GraphicsMagick, ImageMagick, CImg, ffmpeg
+
+
+** No manual inputs to change in main.cpp
+    ... either parse a text file for inputs, or use additional command line arguments
+    ... input file should be .json, also update program to save metadata in .json format
+    ... command line arguments probably better?
+
+
+** Deprecate `initial_life.py` script and initialise grid from infiles/grid.csv file directly in C++.
+    ... use MPI-I/O for parallel reading!
+
+
+** Improving the MPI design of the program --> See the ATPESC-IO_life example (and mlife.txt)
+    ... using more appropriate datatypes instead of struct (e.g. vector for columns, contiguous for rows)
+    ... MPI_Dims_create to work out balanced process layout
+    ... MPI_Cart_create for communication topology
+            NOTE:   won't work for a 9-process stencil (designed for a 5-process stencil i.e. up-down & left-right)
+                    BUT you can avoid a 9-process stencil by doing ALL left-right communications first before performing
+                    the up-down communications --> will still communicate corner grid points succcessfully (see mlife example)
+    ... Use one way communicatons i.e. MPI_Put
+    ... MPI_PROC_NULL as dummy communication for boundaries (non-periodic)
+
+
+// *** THIS PROBABLY WON'T BE USEFUL IF YOU COMPLETE ABOVE POINT ***
+// ** Look into the use of tags to simplify communications
+//     ... i.e. not having to do communications in reverse order they are stored, like I do here:
+//         
+//         int send_ind = 2 * k + n % 2;
+//         int recv_ind = (all_comms.size() - 2) - 2 * k + n % 2; // the recvs are stored in the reverse order relative to the sends
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+---------------------
+MPI-I/O scratch notes
+---------------------
+** Instead of copying grid to a buffer and dumping the buffer after so many generations, will it be faster
+   to just do a **non-blocking** write to file every generation?    
+    
+    Pros:   
+    
+    Cons:   Will need to re-write the code to store the grid contiguously (i.e. single pointer array rather than double pointer)...
+            How do I deal with the ghost layer in an MPI datatype for I/O?
