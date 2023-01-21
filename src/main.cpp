@@ -53,7 +53,7 @@ void domain_decomposition(int rows, int cols, int &imax, int &jmax, int &proc_ro
     }
 
     // share grid dimensions between processes
-    std::vector<int> dims{proc_rows, proc_cols};
+    std::vector<int> dims(proc_rows, proc_cols);
     MPI_Allgather(dims.data(), 2, MPI_INT, all_dims.data(), 2, MPI_INT, MPI_COMM_WORLD);
     all_dims[2 * p] = rows;
     all_dims[2 * p + 1] = cols;
